@@ -79,9 +79,25 @@
                         <i data-lucide="calendar" class="absolute left-3 top-3 w-5 h-5 text-gray-400"></i>
                         <input type="date" id="date-input" class="w-full pl-10 pr-2 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none text-sm text-gray-600">
                     </div>
-                    <div class="relative">
-                        <i data-lucide="clock" class="absolute left-3 top-3 w-5 h-5 text-gray-400"></i>
-                        <input type="time" id="time-input" value="10:00" class="w-full pl-10 pr-2 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none text-sm text-gray-600">
+                    <div class="flex gap-1 items-center">
+                        <div class="relative w-full">
+                            <i data-lucide="clock" class="absolute left-2 top-3 w-4 h-4 text-gray-400"></i>
+                            <select id="hour-input" class="w-full pl-8 pr-6 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none text-sm text-gray-600 appearance-none cursor-pointer">
+                                <!-- JSで生成 -->
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                        <span class="font-bold text-gray-500">:</span>
+                        <div class="relative w-full">
+                            <select id="minute-input" class="w-full pl-3 pr-6 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none text-sm text-gray-600 appearance-none cursor-pointer">
+                                <!-- JSで生成 -->
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -273,6 +289,27 @@
         // 日付入力の初期値を今日に設定
         document.getElementById('date-input').valueAsDate = new Date();
 
+        // 時間と分のプルダウンを生成
+        const hourSelect = document.getElementById('hour-input');
+        for (let i = 0; i < 24; i++) {
+            const option = document.createElement('option');
+            const val = i.toString().padStart(2, '0');
+            option.value = val;
+            option.textContent = val;
+            if (i === 10) option.selected = true; // デフォルト10時
+            hourSelect.appendChild(option);
+        }
+
+        const minuteSelect = document.getElementById('minute-input');
+        for (let i = 0; i < 60; i += 5) { // 5分刻み
+            const option = document.createElement('option');
+            const val = i.toString().padStart(2, '0');
+            option.value = val;
+            option.textContent = val;
+            if (i === 0) option.selected = true; // デフォルト00分
+            minuteSelect.appendChild(option);
+        }
+
         // 出発時間を20分間隔に計算する関数
         function calculateNextDeparture(timeStr) {
             if (!timeStr) return "10:00";
@@ -329,8 +366,10 @@
             const depName = document.getElementById('departure-input').value || '不明な駅';
             const arrName = document.getElementById('arrival-input').value || '不明な駅';
 
-            // 入力された時間を取得し、次の20分間隔の出発時間を計算
-            const inputTime = document.getElementById('time-input').value;
+            // 選択された時間を取得し、次の20分間隔の出発時間を計算
+            const h = document.getElementById('hour-input').value;
+            const m = document.getElementById('minute-input').value;
+            const inputTime = `${h}:${m}`;
             const depTime = calculateNextDeparture(inputTime);
 
             // 計算した情報をUIに反映
