@@ -334,6 +334,36 @@
             return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
         }
 
+        // バスの出発時間を5:00〜1:00の1時間30分間隔に計算する関数
+        function calculateNextBusDeparture(timeStr) {
+            if (!timeStr) return "05:00";
+            let [hours, minutes] = timeStr.split(':').map(Number);
+            
+            // 0時〜3時は、翌日（24時台〜）として計算
+            let totalMinutes = hours * 60 + minutes;
+            if (hours >= 0 && hours <= 3) {
+                totalMinutes += 24 * 60;
+            }
+
+            // 5:00(300分)から1時間30分(90分)間隔のダイヤ (最終便は翌0:30)
+            const schedule = [
+                300, 390, 480, 570, 660, 750, 840, 
+                930, 1020, 1110, 1200, 1290, 1380, 1470
+            ];
+
+            let nextDepartureMinutes = schedule.find(time => time >= totalMinutes);
+
+            // 最終便を過ぎている場合は翌朝5:00
+            if (nextDepartureMinutes === undefined) {
+                nextDepartureMinutes = 300;
+            }
+
+            let resHours = Math.floor(nextDepartureMinutes / 60) % 24;
+            let resMinutes = nextDepartureMinutes % 60;
+
+            return `${resHours.toString().padStart(2, '0')}:${resMinutes.toString().padStart(2, '0')}`;
+        }
+
         // バス停名をそれっぽく変換する関数
         function getBusStopName(stationName) {
             if (stationName.includes('広島')) return '広島バスセンター';
@@ -371,24 +401,29 @@
             const depName = document.getElementById('departure-input').value || '不明な駅';
             const arrName = document.getElementById('arrival-input').value || '不明な駅';
 
-            // 選択された時間を取得し、次の20分間隔の出発時間を計算
+            // 選択された時間を取得
             const h = document.getElementById('hour-input').value;
             const m = document.getElementById('minute-input').value;
             const inputTime = `${h}:${m}`;
-            let depTime = calculateNextDeparture(inputTime);
+            
+            // ルート1（金柑線）の出発時間を計算（20分間隔）
+            let depTimeR1 = calculateNextDeparture(inputTime);
 
             // 金柑線の運転時間の判定 (6:00 ~ 0:00)
             // 0:01 ~ 5:59 の間に検索された場合は、始発の6:00発に変更する
-            const [depH, depM] = depTime.split(':').map(Number);
+            const [depH, depM] = depTimeR1.split(':').map(Number);
             if (depH >= 0 && depH < 6) {
                 if (!(depH === 0 && depM === 0)) {
-                    depTime = "06:00";
+                    depTimeR1 = "06:00";
                 }
             }
 
+            // ルート2（高速バス）の出発時間を計算（5:00〜翌1:00、1時間30分間隔）
+            let depTimeR2 = calculateNextBusDeparture(inputTime);
+
             // 計算した情報をUIに反映
-            document.getElementById('r1-dep-time-summary').textContent = depTime;
-            document.getElementById('r1-dep-time-detail').textContent = depTime + '発';
+            document.getElementById('r1-dep-time-summary').textContent = depTimeR1;
+            document.getElementById('r1-dep-time-detail').textContent = depTimeR1 + '発';
             document.getElementById('r1-dep-station').textContent = depName;
             document.getElementById('r1-arr-station').textContent = arrName;
 
@@ -401,8 +436,8 @@
             arrPlatformEl.textContent = getPlatformInfo(arrName, false);
             arrPlatformEl.className = arrName.includes('広島') ? 'text-xs text-red-500 font-bold mt-1' : 'text-xs text-gray-500 mt-1';
             
-            document.getElementById('r2-dep-time-summary').textContent = depTime;
-            document.getElementById('r2-dep-time-detail').textContent = depTime + '発';
+            document.getElementById('r2-dep-time-summary').textContent = depTimeR2;
+            document.getElementById('r2-dep-time-detail').textContent = depTimeR2 + '発';
             document.getElementById('r2-dep-station').textContent = getBusStopName(depName);
             document.getElementById('r2-arr-station').textContent = getBusStopName(arrName);
 
