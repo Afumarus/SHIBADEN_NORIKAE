@@ -128,29 +128,39 @@
 
             <!-- ルート1詳細 (謎の金柑線) -->
             <div id="route1-details" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <!-- サマリー -->
-                <div class="bg-indigo-50 p-3 sm:p-4 border-b border-indigo-100 flex justify-between items-end">
-                    <div>
-                        <div class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center flex-wrap gap-y-1">
-                            <span><span id="r1-dep-time-summary">10:00</span> <span class="text-xs sm:text-sm font-normal text-gray-500 mx-0.5 sm:mx-1">発</span></span>
-                            <i data-lucide="arrow-right" class="w-4 h-4 text-gray-400 mx-1"></i>
-                            <span>??:?? <span class="text-xs sm:text-sm font-normal text-gray-500 mx-0.5 sm:mx-1">着</span></span>
-                        </div>
-                        <div class="text-xs sm:text-sm text-gray-600 mt-1 flex gap-2 sm:gap-3">
-                            <span class="font-medium text-indigo-700">所要時間 ???</span>
-                            <span>乗換: 0回</span>
-                        </div>
-                    </div>
-                    <div class="text-right shrink-0 ml-2">
-                        <div class="text-[10px] sm:text-xs text-gray-500 mb-0.5">片道</div>
-                        <div class="text-lg sm:text-xl font-bold text-gray-800">???<span class="text-xs sm:text-sm font-normal">円</span></div>
-                    </div>
+                
+                <!-- 運行時間外表示 -->
+                <div id="r1-out-of-service" class="hidden flex-col items-center justify-center p-10 bg-indigo-50/50 text-indigo-800">
+                    <i data-lucide="moon" class="w-12 h-12 mb-3 text-indigo-400 opacity-70"></i>
+                    <p class="font-bold text-center">この時間は金柑線のホームへ繋がる<br>階段が見つかりません...</p>
+                    <p class="text-xs text-indigo-500 mt-3 font-medium">（運転時間：6:00 〜 0:00）</p>
                 </div>
 
-                <!-- タイムライン -->
-                <div class="p-4 sm:p-5 relative">
-                    
-                    <!-- 出発地 -->
+                <!-- 通常表示 -->
+                <div id="r1-normal-content">
+                    <!-- サマリー -->
+                    <div class="bg-indigo-50 p-3 sm:p-4 border-b border-indigo-100 flex justify-between items-end">
+                        <div>
+                            <div class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center flex-wrap gap-y-1">
+                                <span><span id="r1-dep-time-summary">10:00</span> <span class="text-xs sm:text-sm font-normal text-gray-500 mx-0.5 sm:mx-1">発</span></span>
+                                <i data-lucide="arrow-right" class="w-4 h-4 text-gray-400 mx-1"></i>
+                                <span>??:?? <span class="text-xs sm:text-sm font-normal text-gray-500 mx-0.5 sm:mx-1">着</span></span>
+                            </div>
+                            <div class="text-xs sm:text-sm text-gray-600 mt-1 flex gap-2 sm:gap-3">
+                                <span class="font-medium text-indigo-700">所要時間 ???</span>
+                                <span>乗換: 0回</span>
+                            </div>
+                        </div>
+                        <div class="text-right shrink-0 ml-2">
+                            <div class="text-[10px] sm:text-xs text-gray-500 mb-0.5">片道</div>
+                            <div class="text-lg sm:text-xl font-bold text-gray-800">???<span class="text-xs sm:text-sm font-normal">円</span></div>
+                        </div>
+                    </div>
+
+                    <!-- タイムライン -->
+                    <div class="p-4 sm:p-5 relative">
+                        
+                        <!-- 出発地 -->
                         <div class="relative flex items-start mb-6">
                             <div class="timeline-line" style="background-color: #a5b4fc;"></div>
                             <div class="timeline-icon bg-indigo-600 w-10 h-10 rounded-full flex items-center justify-center border-4 border-white shadow-sm shrink-0">
@@ -168,9 +178,10 @@
                                     <div class="w-1.5 h-10 bg-indigo-500 rounded-full"></div>
                                     <div class="flex-1">
                                         <div class="text-sm font-bold text-indigo-700 flex items-center gap-1">
-                                            <i data-lucide="moon" class="w-3 h-3"></i> 金柑線
+                                            <i data-lucide="moon" class="w-3 h-3"></i> 
+                                            <span id="r1-train-name">金柑線</span>
                                         </div>
-                                        <div class="text-xs text-gray-500 mt-1">芝鷺方面 行き先不明</div>
+                                        <div id="r1-train-dest" class="text-xs text-gray-500 mt-1">芝鷺方面 行き先不明</div>
                                     </div>
                                     <div class="text-right">
                                         <div class="text-sm font-medium text-indigo-600">???</div>
@@ -193,8 +204,13 @@
                                 <div id="r1-arr-platform" class="text-xs text-gray-500 mt-1">1番線着</div>
                             </div>
                         </div>
-
                     </div>
+                    
+                    <!-- ぷらっとかぼす案内 -->
+                    <div class="bg-indigo-50/70 border-t border-indigo-100 p-3 text-center text-xs sm:text-sm font-bold text-indigo-700">
+                        <i data-lucide="ticket" class="inline w-3.5 h-3.5 mr-1 mb-0.5 text-indigo-500"></i>ご予約は「ぷらっとかぼす」をご利用ください
+                    </div>
+                </div>
             </div>
 
             <!-- ルート2詳細 (高速バス) -->
@@ -400,6 +416,7 @@
             // 入力された出発地・到着地を取得
             const depName = document.getElementById('departure-input').value || '不明な駅';
             const arrName = document.getElementById('arrival-input').value || '不明な駅';
+            const isHiroshimaBound = arrName.includes('広島');
 
             // 選択された時間を取得
             const h = document.getElementById('hour-input').value;
@@ -417,6 +434,29 @@
                     depTimeR1 = "06:00";
                 }
             }
+
+            // --- 金柑線の列車種別と号数の計算 ---
+            const finalDepM = parseInt(depTimeR1.split(':')[1]);
+            const finalDepH = parseInt(depTimeR1.split(':')[0]);
+            
+            let trainType = "";
+            if (finalDepM === 0) trainType = "はっさく";
+            else if (finalDepM === 20) trainType = "なつみ";
+            else trainType = "かぼす";
+
+            let calcH = finalDepH;
+            if (calcH < 6) calcH += 24; // 0:00は24時として計算
+            
+            // 6:00をインデックス0として順番を計算
+            let trainIndex = (calcH - 6) * 3 + (finalDepM / 20);
+            
+            // 広島方面(下り)は奇数、芝鷺方面(上り)は偶数
+            let trainNumber = isHiroshimaBound ? (trainIndex + 1) * 2 - 1 : (trainIndex + 1) * 2;
+            let trainNumStr = trainNumber.toString().padStart(3, '0');
+
+            // UIへの反映（金柑線）
+            document.getElementById('r1-train-name').textContent = `金柑線 特急 ${trainType} ${trainNumStr}号`;
+            document.getElementById('r1-train-dest').textContent = isHiroshimaBound ? '広島方面 行き先不明' : '芝鷺方面 行き先不明';
 
             // ルート2（高速バス）の出発時間を計算（5:00〜翌1:00、1時間30分間隔）
             let depTimeR2 = calculateNextBusDeparture(inputTime);
@@ -440,6 +480,16 @@
             document.getElementById('r2-dep-time-detail').textContent = depTimeR2 + '発';
             document.getElementById('r2-dep-station').textContent = getBusStopName(depName);
             document.getElementById('r2-arr-station').textContent = getBusStopName(arrName);
+
+            const r1Normal = document.getElementById('r1-normal-content');
+            const r1Out = document.getElementById('r1-out-of-service');
+            const tab1 = document.getElementById('tab-route1');
+
+            // 始発対応後なので基本的に運行時間内として表示
+            r1Normal.classList.remove('hidden');
+            r1Out.classList.add('hidden');
+            r1Out.classList.remove('flex');
+            tab1.innerHTML = 'ルート1<br><span class="text-xs font-normal">謎・直通</span>';
 
             // ボタンを無効化しテキスト変更
             btn.disabled = true;
