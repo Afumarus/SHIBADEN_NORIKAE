@@ -451,10 +451,9 @@
             const finalDepM = parseInt(depTimeR1.split(':')[1]);
             const finalDepH = parseInt(depTimeR1.split(':')[0]);
             
-            let trainType = "";
-            if (finalDepM === 0) trainType = "はっさく";
-            else if (finalDepM === 20) trainType = "なつみ";
-            else trainType = "かぼす";
+            // 列車名をランダムに選択
+            const trainTypes = ["はっさく", "なつみ", "かぼす"];
+            let trainType = trainTypes[Math.floor(Math.random() * trainTypes.length)];
 
             let calcH = finalDepH;
             if (calcH < 6) calcH += 24; // 0:00は24時として計算
