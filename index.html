@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TransitNavi - 経路検索</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* カスタムスクロールバーなどの微調整 */
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            background-color: #f3f4f6;
+        }
+        .timeline-line {
+            position: absolute;
+            left: 1.25rem; /* 20px */
+            top: 2rem;
+            bottom: -1rem;
+            width: 4px;
+            background-color: #cbd5e1;
+            z-index: 0;
+        }
+        .timeline-icon {
+            position: relative;
+            z-index: 10;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased min-h-screen pb-20">
+
+    <!-- ヘッダー -->
+    <header class="bg-blue-600 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-2 font-bold text-xl tracking-wider">
+                <i data-lucide="train" class="w-6 h-6"></i>
+                TransitNavi
+            </div>
+            <button class="text-white hover:text-blue-200 transition-colors">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-4 mt-6">
+        
+        <!-- 検索フォーム -->
+        <div class="bg-white rounded-xl shadow-sm p-5 mb-6 border border-gray-100">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-gray-700">
+                <i data-lucide="search" class="w-5 h-5 text-blue-500"></i>経路検索
+            </h2>
+            
+            <div class="space-y-4">
+                <div class="relative flex items-center">
+                    <div class="absolute left-3 text-gray-400 font-bold">発</div>
+                    <input type="text" id="departure-input" value="広島" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-base sm:text-lg font-medium" placeholder="出発地">
+                </div>
+                
+                <div class="flex justify-center -my-3 relative z-10">
+                    <button id="swap-btn" class="bg-white border border-gray-200 rounded-full p-2.5 text-blue-500 shadow-sm hover:bg-blue-50 transition-colors active:scale-95 touch-manipulation">
+                        <i data-lucide="arrow-down-up" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <div class="relative flex items-center">
+                    <div class="absolute left-3 text-gray-400 font-bold">着</div>
+                    <input type="text" id="arrival-input" value="芝鷺" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-base sm:text-lg font-medium" placeholder="到着地">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mt-2">
+                    <div class="relative">
+                        <i data-lucide="calendar" class="absolute left-3 top-3 w-5 h-5 text-gray-400"></i>
+                        <input type="date" id="date-input" class="w-full pl-10 pr-2 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none text-sm text-gray-600">
+                    </div>
+                    <div class="relative">
+                        <i data-lucide="clock" class="absolute left-3 top-3 w-5 h-5 text-gray-400"></i>
+                        <input type="time" id="time-input" value="10:00" class="w-full pl-10 pr-2 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none text-sm text-gray-600">
+                    </div>
+                </div>
+
+                <button id="search-btn" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-3.5 px-4 rounded-lg shadow transition-colors flex justify-center items-center gap-2 mt-4 touch-manipulation">
+                    <span>検索する</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ローディングインジケーター -->
+        <div id="loading" class="hidden flex-col items-center justify-center py-10">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-3"></div>
+            <p class="text-gray-500 text-sm">架空の時刻表を検索中...</p>
+        </div>
+
+        <!-- 検索結果エリア -->
+        <div id="results" class="hidden fade-in space-y-6">
+            
+            <!-- ルート切り替えタブ -->
+            <div class="flex bg-white rounded-lg p-1 shadow-sm border border-gray-200">
+                <button onclick="switchRoute(1)" id="tab-route1" class="flex-1 py-2 px-4 rounded-md text-sm font-bold bg-indigo-100 text-indigo-700 transition-colors">
+                    ルート1<br><span class="text-xs font-normal">謎・直通</span>
+                </button>
+                <button onclick="switchRoute(2)" id="tab-route2" class="flex-1 py-2 px-4 rounded-md text-sm font-bold text-gray-500 hover:bg-gray-50 transition-colors">
+                    ルート2<br><span class="text-xs font-normal">安</span>
+                </button>
+            </div>
+
+            <!-- ルート1詳細 (謎の金柑線) -->
+            <div id="route1-details" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <!-- サマリー -->
+                <div class="bg-indigo-50 p-3 sm:p-4 border-b border-indigo-100 flex justify-between items-end">
+                    <div>
+                        <div class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center flex-wrap gap-y-1">
+                            <span><span id="r1-dep-time-summary">10:00</span> <span class="text-xs sm:text-sm font-normal text-gray-500 mx-0.5 sm:mx-1">発</span></span>
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-gray-400 mx-1"></i>
+                            <span>??:?? <span class="text-xs sm:text-sm font-normal text-gray-500 mx-0.5 sm:mx-1">着</span></span>
+                        </div>
+                        <div class="text-xs sm:text-sm text-gray-600 mt-1 flex gap-2 sm:gap-3">
+                            <span class="font-medium text-indigo-700">所要時間 ???</span>
+                            <span>乗換: 0回</span>
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0 ml-2">
+                        <div class="text-[10px] sm:text-xs text-gray-500 mb-0.5">片道</div>
+                        <div class="text-lg sm:text-xl font-bold text-gray-800">???<span class="text-xs sm:text-sm font-normal">円</span></div>
+                    </div>
+                </div>
+
+                <!-- タイムライン -->
+                <div class="p-4 sm:p-5 relative">
+                    
+                    <!-- 出発地 -->
+                    <div class="relative flex items-start mb-6">
+                        <div class="timeline-line" style="background-color: #a5b4fc;"></div>
+                        <div class="timeline-icon bg-indigo-600 w-10 h-10 rounded-full flex items-center justify-center border-4 border-white shadow-sm shrink-0">
+                            <i data-lucide="train-front" class="w-4 h-4 text-white"></i>
+                        </div>
+                        <div class="ml-4 w-full pt-1">
+                            <div class="flex justify-between items-baseline mb-1">
+                                <h3 id="r1-dep-station" class="text-base sm:text-lg font-bold">広島</h3>
+                                <span id="r1-dep-time-detail" class="text-sm sm:text-base text-gray-800 font-bold">10:00発</span>
+                            </div>
+                            <div id="r1-dep-platform" class="text-[10px] sm:text-xs text-red-500 font-bold mt-1">331番線発 (※通常は存在しません)</div>
+                            
+                            <!-- 交通機関ブロック -->
+                            <div class="my-3 p-3 bg-indigo-50 border border-indigo-200 rounded-lg flex items-center gap-3">
+                                <div class="w-1.5 h-10 bg-indigo-500 rounded-full"></div>
+                                <div class="flex-1">
+                                    <div class="text-sm font-bold text-indigo-700 flex items-center gap-1">
+                                        <i data-lucide="moon" class="w-3 h-3"></i> 金柑線
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">芝鷺方面 行き先不明</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm font-medium text-indigo-600">???</div>
+                                    <div class="text-xs text-gray-500">料金計算不可</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 到着地 -->
+                    <div class="relative flex items-start">
+                        <div class="timeline-icon bg-red-500 w-10 h-10 rounded-full flex items-center justify-center border-4 border-white shadow-sm shrink-0">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-white"></i>
+                        </div>
+                        <div class="ml-4 w-full pt-1">
+                            <div class="flex justify-between items-baseline">
+                                <h3 class="text-base sm:text-lg font-bold text-red-600 leading-tight"><span id="r1-arr-station">芝鷺</span> <span class="text-xs sm:text-sm font-normal text-gray-500 ml-0.5">(架空)</span></h3>
+                                <span class="text-sm sm:text-base text-gray-800 font-bold ml-2">??:??着</span>
+                            </div>
+                            <div id="r1-arr-platform" class="text-xs text-gray-500 mt-1">1番線着</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ルート2詳細 (高速バス) -->
+            <div id="route2-details" class="hidden bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <!-- サマリー -->
+                <div class="bg-green-50 p-3 sm:p-4 border-b border-green-100 flex justify-between items-end">
+                    <div>
+                        <div class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center flex-wrap gap-y-1">
+                            <span><span id="r2-dep-time-summary">10:00</span> <span class="text-xs sm:text-sm font-normal text-gray-500 mx-0.5 sm:mx-1">発</span></span>
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-gray-400 mx-1"></i>
+                            <span>??:?? <span class="text-xs sm:text-sm font-normal text-gray-500 mx-0.5 sm:mx-1">着</span></span>
+                        </div>
+                        <div class="text-xs sm:text-sm text-gray-600 mt-1 flex gap-2 sm:gap-3">
+                            <span class="font-medium text-green-700">所要時間 ???</span>
+                            <span>乗換: 0回</span>
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0 ml-2">
+                        <div class="text-[10px] sm:text-xs text-gray-500 mb-0.5">片道</div>
+                        <div class="text-lg sm:text-xl font-bold text-gray-800">???<span class="text-xs sm:text-sm font-normal">円</span></div>
+                    </div>
+                </div>
+
+                <!-- タイムライン -->
+                <div class="p-4 sm:p-5 relative">
+                    <!-- 出発地 -->
+                    <div class="relative flex items-start mb-6">
+                        <div class="timeline-line" style="background-color: #86efac;"></div>
+                        <div class="timeline-icon bg-green-600 w-10 h-10 rounded-full flex items-center justify-center border-4 border-white shadow-sm shrink-0">
+                            <i data-lucide="bus" class="w-4 h-4 text-white"></i>
+                        </div>
+                        <div class="ml-4 w-full pt-1">
+                            <div class="flex justify-between items-baseline mb-1">
+                                <h3 id="r2-dep-station" class="text-base sm:text-lg font-bold">広島バスセンター</h3>
+                                <span id="r2-dep-time-detail" class="text-sm sm:text-base text-gray-800 font-bold">10:00発</span>
+                            </div>
+                            
+                            <!-- 交通機関ブロック -->
+                            <div class="my-3 p-3 bg-gray-50 border border-gray-200 rounded-lg flex items-center gap-3">
+                                <div class="w-1.5 h-10 bg-green-500 rounded-full"></div>
+                                <div class="flex-1">
+                                    <div class="text-sm font-bold text-green-700 flex items-center gap-1">
+                                        <i data-lucide="bus-front" class="w-3 h-3"></i> 芝鷺ドリーム号 (架空)
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">芝鷺駅前行</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm font-medium text-green-700">???</div>
+                                    <div class="text-xs text-gray-500">料金計算不可</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 到着地 -->
+                    <div class="relative flex items-start">
+                        <div class="timeline-icon bg-red-500 w-10 h-10 rounded-full flex items-center justify-center border-4 border-white shadow-sm shrink-0">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-white"></i>
+                        </div>
+                        <div class="ml-4 w-full pt-1">
+                            <div class="flex justify-between items-baseline">
+                                <h3 class="text-base sm:text-lg font-bold text-red-600 leading-tight"><span id="r2-arr-station">芝鷺駅前</span> <span class="text-xs sm:text-sm font-normal text-gray-500 ml-0.5">(架空)</span></h3>
+                                <span id="r2-arr-time-detail" class="text-sm sm:text-base text-gray-800 font-bold ml-2">??:??着</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- アラートメッセージ -->
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i data-lucide="info" class="h-5 w-5 text-yellow-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-yellow-700">
+                            <strong>お知らせ:</strong> 「芝鷺駅」および「白鷺本線」「芝鷺ドリーム号」は架空の存在です。この経路情報はプロトタイプ表示用のモックデータです。
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Lucideアイコンの初期化
+        lucide.createIcons();
+
+        // 日付入力の初期値を今日に設定
+        document.getElementById('date-input').valueAsDate = new Date();
+
+        // 出発時間を20分間隔に計算する関数
+        function calculateNextDeparture(timeStr) {
+            if (!timeStr) return "10:00";
+            let [hours, minutes] = timeStr.split(':').map(Number);
+            
+            if (minutes === 0) {
+                // そのまま
+            } else if (minutes <= 20) {
+                minutes = 20;
+            } else if (minutes <= 40) {
+                minutes = 40;
+            } else {
+                minutes = 0;
+                hours = (hours + 1) % 24;
+            }
+            
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        }
+
+        // バス停名をそれっぽく変換する関数
+        function getBusStopName(stationName) {
+            if (stationName.includes('広島')) return '広島バスセンター';
+            if (stationName.includes('芝鷺')) return '芝鷺駅前';
+            return stationName + ' (バス停)';
+        }
+
+        // 番線情報を取得する関数
+        function getPlatformInfo(stationName, isDeparture) {
+            if (stationName.includes('広島')) {
+                return isDeparture ? '331番線発 (※通常は存在しません)' : '331番線着 (※通常は存在しません)';
+            }
+            if (stationName.includes('芝鷺')) {
+                return isDeparture ? '2番線発' : '1番線着';
+            }
+            return isDeparture ? '発のりば不明' : '着のりば不明';
+        }
+
+        // 入れ替えボタンのクリックイベント
+        document.getElementById('swap-btn').addEventListener('click', function() {
+            const depInput = document.getElementById('departure-input');
+            const arrInput = document.getElementById('arrival-input');
+            const temp = depInput.value;
+            depInput.value = arrInput.value;
+            arrInput.value = temp;
+        });
+
+        // 検索ボタンのクリックイベント
+        document.getElementById('search-btn').addEventListener('click', function() {
+            const btn = this;
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+
+            // 入力された出発地・到着地を取得
+            const depName = document.getElementById('departure-input').value || '不明な駅';
+            const arrName = document.getElementById('arrival-input').value || '不明な駅';
+
+            // 入力された時間を取得し、次の20分間隔の出発時間を計算
+            const inputTime = document.getElementById('time-input').value;
+            const depTime = calculateNextDeparture(inputTime);
+
+            // 計算した情報をUIに反映
+            document.getElementById('r1-dep-time-summary').textContent = depTime;
+            document.getElementById('r1-dep-time-detail').textContent = depTime + '発';
+            document.getElementById('r1-dep-station').textContent = depName;
+            document.getElementById('r1-arr-station').textContent = arrName;
+
+            // 番線情報の更新
+            const depPlatformEl = document.getElementById('r1-dep-platform');
+            depPlatformEl.textContent = getPlatformInfo(depName, true);
+            depPlatformEl.className = depName.includes('広島') ? 'text-xs text-red-500 font-bold mt-1' : 'text-xs text-gray-500 mt-1';
+
+            const arrPlatformEl = document.getElementById('r1-arr-platform');
+            arrPlatformEl.textContent = getPlatformInfo(arrName, false);
+            arrPlatformEl.className = arrName.includes('広島') ? 'text-xs text-red-500 font-bold mt-1' : 'text-xs text-gray-500 mt-1';
+            
+            document.getElementById('r2-dep-time-summary').textContent = depTime;
+            document.getElementById('r2-dep-time-detail').textContent = depTime + '発';
+            document.getElementById('r2-dep-station').textContent = getBusStopName(depName);
+            document.getElementById('r2-arr-station').textContent = getBusStopName(arrName);
+
+            // ボタンを無効化しテキスト変更
+            btn.disabled = true;
+            btn.innerHTML = '<div class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div> 検索中...';
+            btn.classList.add('opacity-75');
+
+            // 結果を一旦隠してローディング表示
+            results.classList.add('hidden');
+            loading.classList.remove('hidden');
+            loading.classList.add('flex');
+
+            // 擬似的な通信遅延（1.5秒）
+            setTimeout(() => {
+                loading.classList.add('hidden');
+                loading.classList.remove('flex');
+                
+                results.classList.remove('hidden');
+                
+                // ボタンを元に戻す
+                btn.disabled = false;
+                btn.innerHTML = '<span>条件を変更して再検索</span>';
+                btn.classList.remove('opacity-75', 'bg-blue-600', 'hover:bg-blue-700');
+                btn.classList.add('bg-white', 'text-blue-600', 'border', 'border-blue-600', 'hover:bg-blue-50');
+            }, 1500);
+        });
+
+        // ルートタブの切り替え機能
+        function switchRoute(routeId) {
+            const r1Details = document.getElementById('route1-details');
+            const r2Details = document.getElementById('route2-details');
+            const tab1 = document.getElementById('tab-route1');
+            const tab2 = document.getElementById('tab-route2');
+
+            if (routeId === 1) {
+                r1Details.classList.remove('hidden');
+                r2Details.classList.add('hidden');
+                
+                // タブのスタイル変更
+                tab1.className = 'flex-1 py-2 px-4 rounded-md text-sm font-bold bg-indigo-100 text-indigo-700 transition-colors';
+                tab2.className = 'flex-1 py-2 px-4 rounded-md text-sm font-bold text-gray-500 hover:bg-gray-50 transition-colors';
+            } else {
+                r1Details.classList.add('hidden');
+                r2Details.classList.remove('hidden');
+                
+                // タブのスタイル変更
+                tab2.className = 'flex-1 py-2 px-4 rounded-md text-sm font-bold bg-green-100 text-green-700 transition-colors';
+                tab1.className = 'flex-1 py-2 px-4 rounded-md text-sm font-bold text-gray-500 hover:bg-gray-50 transition-colors';
+            }
+        }
+    </script>
+</body>
+</html>
