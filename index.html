@@ -466,7 +466,7 @@
             let trainNumStr = trainNumber.toString().padStart(3, '0');
 
             // UIへの反映（金柑線）
-            document.getElementById('r1-train-name').textContent = `金柑線 特急 ${trainType} ${trainNumStr}号`;
+            document.getElementById('r1-train-name').textContent = `金柑線 ${trainType} ${trainNumStr}号`;
             document.getElementById('r1-train-dest').textContent = isHiroshimaBound ? '広島方面 行き先不明' : '芝鷺方面 行き先不明';
 
             // ルート2（高速バス）の出発時間を計算（5:00〜翌1:00、1時間30分間隔）
