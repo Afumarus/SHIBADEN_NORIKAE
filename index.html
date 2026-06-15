@@ -4,8 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>芝鷺駅から広島駅までの行き方・乗り換え案内</title>
+    
+    <!-- SEO / メタディスクリプション -->
     <meta name="description" content="広島駅から架空の秘境駅「芝鷺駅」までのアクセス方法、金柑線の時刻表、芝鷺ドリーム号（高速バス）の乗り換えルートをご案内します。">
+    <meta name="keywords" content="芝鷺駅, 広島駅, 乗り換え, 行き方, 時刻表, 金柑線, 芝鷺ドリーム号, 架空路線, 秘境駅, 芝鷺電気軌道, ロブロックス">
+    
+    <!-- OGP (SNSでのシェア用設定) -->
+    <meta property="og:title" content="芝鷺駅から広島駅までの行き方・乗り換え案内">
+    <meta property="og:description" content="広島駅から架空の秘境駅「芝鷺駅」までのアクセス方法、金柑線の時刻表、芝鷺ドリーム号のルートをご案内します。">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="TransitNavi - 架空経路検索">
+    
+    <!-- X (Twitter) カード設定 -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="芝鷺駅から広島駅までの行き方・乗り換え案内">
+    <meta name="twitter:description" content="広島駅から架空の秘境駅「芝鷺駅」までのアクセス方法をご案内します。">
+    
+    <!-- Google Search Console -->
     <meta name="google-site-verification" content="S9ibUEEniIk4n6UGyPzcBiKGIcGNIA0uV6rGiloqOHY" />
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -62,8 +79,8 @@
                 <div class="relative flex items-center">
                     <div class="absolute left-3 text-gray-400 font-bold z-10 pointer-events-none">発</div>
                     <select id="departure-input" class="w-full pl-10 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-base sm:text-lg font-medium appearance-none cursor-pointer">
-                        <option value="広島" selected>広島</option>
-                        <option value="芝鷺">芝鷺</option>
+                        <option value="広島">広島</option>
+                        <option value="芝鷺" selected>芝鷺</option>
                     </select>
                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
                         <i data-lucide="chevron-down" class="w-5 h-5"></i>
@@ -79,36 +96,36 @@
                 <div class="relative flex items-center">
                     <div class="absolute left-3 text-gray-400 font-bold z-10 pointer-events-none">着</div>
                     <select id="arrival-input" class="w-full pl-10 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-base sm:text-lg font-medium appearance-none cursor-pointer">
-                        <option value="広島">広島</option>
-                        <option value="芝鷺" selected>芝鷺</option>
+                        <option value="広島" selected>広島</option>
+                        <option value="芝鷺">芝鷺</option>
                     </select>
                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
                         <i data-lucide="chevron-down" class="w-5 h-5"></i>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 mt-2">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                     <div class="relative">
-                        <i data-lucide="calendar" class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
-                        <input type="date" id="date-input" class="w-full pl-8 pr-2 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none text-base sm:text-sm text-gray-600">
+                        <i data-lucide="calendar" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                        <input type="date" id="date-input" class="w-full pl-10 pr-3 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-base text-gray-600">
                     </div>
-                    <div class="flex gap-1 sm:gap-2 items-center">
+                    <div class="flex gap-2 items-center">
                         <div class="relative w-full">
-                            <i data-lucide="clock" class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
-                            <select id="hour-input" class="w-full pl-8 pr-6 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none text-base sm:text-sm text-gray-600 appearance-none cursor-pointer">
+                            <i data-lucide="clock" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                            <select id="hour-input" class="w-full pl-10 pr-8 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-base text-gray-600 appearance-none cursor-pointer">
                                 <!-- JSで生成 -->
                             </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 sm:px-2 text-gray-400">
-                                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                                <i data-lucide="chevron-down" class="w-5 h-5"></i>
                             </div>
                         </div>
-                        <span class="font-bold text-gray-500">:</span>
+                        <span class="font-bold text-gray-500 text-lg">:</span>
                         <div class="relative w-full">
-                            <select id="minute-input" class="w-full pl-3 sm:pl-4 pr-6 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none text-base sm:text-sm text-gray-600 appearance-none cursor-pointer">
+                            <select id="minute-input" class="w-full pl-4 pr-8 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-base text-gray-600 appearance-none cursor-pointer">
                                 <!-- JSで生成 -->
                             </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 sm:px-2 text-gray-400">
-                                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                                <i data-lucide="chevron-down" class="w-5 h-5"></i>
                             </div>
                         </div>
                     </div>
